@@ -60,11 +60,11 @@ provider:
 #    - exclude-me-dir/**
 
 functions:
-  quickboocksAuthUrl:
-    handler: handler.quickboocksAuthUrl
+  createUrl:
+    handler: handler.qbAuthUrl
     events:
       - http:
-          path: api/quickboocksAuthUrl
+          path: api/qbAuthUrl
           method: get
           integration: lambda
           cors:

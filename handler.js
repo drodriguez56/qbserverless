@@ -9,7 +9,7 @@ function generateAntiForgery(session) {
   return csrf.create(session.secret);
 }
 
-module.exports.hello = (event, context, callback) => {
+module.exports.qbAuthUrl = (event, context, callback) => {
   var redirecturl =
     "https://appcenter.intuit.com/connect/oauth2" +
     "?client_id=" +
