@@ -1,16 +1,24 @@
-'use strict';
+"use strict";
+var QuickBooks = require("node-quickbooks");
+var Tokens = require("csrf");
+var csrf = new Tokens();
+QuickBooks.setOauthVersion("2.0");
+
+function generateAntiForgery(session) {
+  session.secret = csrf.secretSync();
+  return csrf.create(session.secret);
+}
 
 module.exports.hello = (event, context, callback) => {
-  const response = {
-    statusCode: 200,
-    body: JSON.stringify({
-      message: 'Go Serverless v1.0! Your function executed successfully!',
-      input: event,
-    }),
-  };
-
-  callback(null, response);
-
-  // Use this code if you don't use the http event with the LAMBDA-PROXY integration
-  // callback(null, { message: 'Go Serverless v1.0! Your function executed successfully!', event });
+  var redirecturl =
+    "https://appcenter.intuit.com/connect/oauth2" +
+    "?client_id=" +
+    process.env.QB_CONSUMER_KEY +
+    "&redirect_uri=" +
+    encodeURIComponent("http://localhost:3000/callback/") +
+    "&scope=com.intuit.quickbooks.accounting" +
+    "&response_type=code" +
+    "&state=" +
+    generateAntiForgery({});
+  context.succeed({ location: redirecturl });
 };
