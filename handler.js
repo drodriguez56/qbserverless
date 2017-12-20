@@ -17,8 +17,8 @@ module.exports.qbAuthUrl = (event, context, callback) => {
     "?client_id=" +
     process.env.QB_CONSUMER_KEY +
     "&redirect_uri=" +
-    encodeURIComponent("http://localhost:3000/callback/") +
-    "&scope=openid%20email%20phone%20address%20com.intuit.quickbooks.accounting" +
+    "http://localhost:3000/callback/" +
+    "&scope=com.intuit.quickbooks.accounting%20openid%20email%20phone%20address" +
     "&response_type=code" +
     "&state=" +
     generateAntiForgery({});
@@ -54,20 +54,28 @@ module.exports.qbCallback = (event, context, callback) => {
       var error = new Error(response.error);
       context.done(error, {});
     } else {
-      // save the access token somewhere on behalf of the logged in user
-      var qbo = new QuickBooks(
-        process.env.QB_CONSUMER_KEY,
-        process.env.QB_CONSUMER_SECRET,
-        response.access_token /* oAuth access token */,
-        false /* no token secret for oAuth 2.0 */,
-        event.body.params.realmId,
-        true /* use a sandbox account */,
-        true /* turn debugging on */,
-        4 /* minor version */,
-        "2.0" /* oauth version */,
-        response.refresh_token /* refresh token */
-      );
-      context.succeed({ message: response });
+      console.log(response.access_token);
+      var getBody = {
+        url: "https://accounts.platform.intuit.com/v1/openid_connect/userinfo",
+        headers: {
+          Accept: "application/json",
+          Authorization: "Bearer " + response.access_token
+        }
+      };
+      console.log("++++++++++");
+      console.log(getBody);
+      request.get(getBody, function(gerr, res, d) {
+        console.log(res);
+        if (gerr) {
+          var getErr = new Error(gerr);
+          context.done(getErr, {});
+        }
+        var final = JSON.parse(res.body);
+        console.log("-------");
+        console.log(final);
+        // Save token on DB && create user
+        context.succeed({ message: final });
+      });
     }
   });
 };
