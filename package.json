@@ -9,11 +9,16 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.17.1",
+    "atob": "^2.0.3",
+    "btoa": "^1.1.2",
+    "client-oauth2": "^4.1.0",
     "csrf": "^3.0.6",
+    "expect": "^22.0.3",
+    "jsonwebtoken": "^8.1.0",
     "jwt-decode": "^2.2.0",
     "node-quickbooks": "^2.0.20",
     "request": "^2.83.0",
+    "rsa-pem-from-mod-exp": "^0.8.4",
     "save": "^2.3.1"
   }
 }

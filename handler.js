@@ -1,10 +1,9 @@
 "use strict";
-var QuickBooks = require("node-quickbooks");
 var request = require("request");
 var Tokens = require("csrf");
-var decode = require("jwt-decode");
+var tools = require("./tools/tools.js");
+var jwt = require("./tools/jwt.js");
 var csrf = new Tokens();
-QuickBooks.setOauthVersion("2.0");
 
 function generateAntiForgery(session) {
   session.secret = csrf.secretSync();
@@ -12,70 +11,63 @@ function generateAntiForgery(session) {
 }
 
 module.exports.qbAuthUrl = (event, context, callback) => {
-  var redirecturl =
-    "https://appcenter.intuit.com/connect/oauth2" +
-    "?client_id=" +
-    process.env.QB_CONSUMER_KEY +
-    "&redirect_uri=" +
-    "http://localhost:3000/callback/" +
-    "&scope=com.intuit.quickbooks.accounting%20openid%20email%20phone%20address" +
-    "&response_type=code" +
-    "&state=" +
-    generateAntiForgery({});
-  context.succeed({ location: redirecturl });
+  tools.setScopes("sign_in_with_intuit");
+  console.log("check");
+  console.log(tools.intuitAuth);
+  // Constructs the authorization URI.
+  var uri = tools.intuitAuth.code.getUri({
+    // Add CSRF protection
+    state: tools.generateAntiForgery({})
+  });
+
+  // Redirect
+  console.log("Redirecting to authorization uri: " + uri);
+
+  context.succeed({ location: uri });
 };
 
 module.exports.qbCallback = (event, context, callback) => {
-  var auth = new Buffer(
-    process.env.QB_CONSUMER_KEY + ":" + process.env.QB_CONSUMER_SECRET
-  ).toString("base64");
+  // if (e)) {
+  //   return context.done(
+  //     new Error("Error - invalid anti-forgery CSRF response!"),
+  //     {}
+  //   );
+  // }
+  tools.intuitAuth.code.getToken(event.headers.Referer).then(
+    function(token) {
+      console.log(token);
+      // Store token - this would be where tokens would need to be
+      // persisted (in a SQL DB, for example).
+      // tools.saveToken(req.session, token);
+      // req.session.realmId = req.query.realmId;
 
-  var postBody = {
-    url: "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: "Basic " + auth
-    },
-    form: {
-      grant_type: "authorization_code",
-      code: event.body.params.code,
-      redirect_uri: "http://localhost:3000/callback/" //Make sure this path matches entry in application dashboard
-    }
-  };
-
-  request.post(postBody, function(e, r, data) {
-    if (e) {
-      var err = new Error(e);
-      context.done(err, {});
-    }
-    var response = JSON.parse(r.body);
-    if (response.error) {
-      var error = new Error(response.error);
-      context.done(error, {});
-    } else {
-      console.log(response.access_token);
-      var getBody = {
-        url: "https://accounts.platform.intuit.com/v1/openid_connect/userinfo",
-        headers: {
-          Accept: "application/json",
-          Authorization: "Bearer " + response.access_token
-        }
+      var errorFn = function(e) {
+        console.log(e);
+        return context.done(new Error(e), {});
       };
-      console.log("++++++++++");
-      console.log(getBody);
-      request.get(getBody, function(gerr, res, d) {
-        console.log(res);
-        if (gerr) {
-          var getErr = new Error(gerr);
-          context.done(getErr, {});
+
+      if (token.data.id_token) {
+        try {
+          // We should decode and validate the ID token
+          jwt.validate(
+            token.data.id_token,
+            function() {
+              // Callback function - redirect to /connected
+              context.succeed({ message: "connected" });
+            },
+            errorFn
+          );
+        } catch (e) {
+          return errorFn(e);
         }
-        var final = JSON.parse(res.body);
-        console.log("-------");
-        console.log(final);
-        // Save token on DB && create user
-        context.succeed({ message: final });
-      });
+      } else {
+        // Redirect to /connected
+        context.succeed({ message: "connected" });
+      }
+    },
+    function(err) {
+      console.log(err);
+      return errorFn(err);
     }
-  });
+  );
 };
