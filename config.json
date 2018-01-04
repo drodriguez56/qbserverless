@@ -5,13 +5,9 @@
   "api_uri": "https://sandbox-quickbooks.api.intuit.com/v3/company/",
   "scopes": {
     "sign_in_with_intuit": ["openid", "profile", "email", "phone", "address"],
-    "connect_to_quickbooks": [
-      "com.intuit.quickbooks.accounting",
-      "com.intuit.quickbooks.payment"
-    ],
+    "connect_to_quickbooks": ["com.intuit.quickbooks.accounting"],
     "connect_handler": [
       "com.intuit.quickbooks.accounting",
-      "com.intuit.quickbooks.payment",
       "openid",
       "profile",
       "email",

@@ -140,6 +140,7 @@ var Tools = function() {
     session.refreshToken = token.refreshToken;
     session.tokenType = token.tokenType;
     session.data = token.data;
+    return session;
   };
 
   // Get the token object from session storage

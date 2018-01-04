@@ -11,9 +11,7 @@ function generateAntiForgery(session) {
 }
 
 module.exports.qbAuthUrl = (event, context, callback) => {
-  tools.setScopes("sign_in_with_intuit");
-  console.log("check");
-  console.log(tools.intuitAuth);
+  tools.setScopes("connect_handler");
   // Constructs the authorization URI.
   var uri = tools.intuitAuth.code.getUri({
     // Add CSRF protection
@@ -40,12 +38,11 @@ module.exports.qbCallback = (event, context, callback) => {
       // persisted (in a SQL DB, for example).
       // tools.saveToken(req.session, token);
       // req.session.realmId = req.query.realmId;
-
+      var session = tools.saveToken({}, token);
       var errorFn = function(e) {
         console.log(e);
         return context.done(new Error(e), {});
       };
-
       if (token.data.id_token) {
         try {
           // We should decode and validate the ID token
@@ -53,7 +50,7 @@ module.exports.qbCallback = (event, context, callback) => {
             token.data.id_token,
             function() {
               // Callback function - redirect to /connected
-              context.succeed({ message: "connected" });
+              callback(null, { session: session });
             },
             errorFn
           );
@@ -70,4 +67,49 @@ module.exports.qbCallback = (event, context, callback) => {
       return errorFn(err);
     }
   );
+};
+
+module.exports.connected = (event, context, callback) => {
+  var token = tools.getToken(event.body.session);
+  console.log(token);
+  var url = tools.openid_configuration.userinfo_endpoint;
+  console.log("Making API call to: " + url);
+  var requestObj = {
+    url: url,
+    headers: {
+      Authorization: "Bearer " + token.accessToken,
+      Accept: "application/json"
+    }
+  };
+  request(requestObj, function(err, response) {
+    // Check if 401 response was returned - refresh tokens if so!
+    tools.checkForUnauthorized(event.body, requestObj, err, response).then(
+      function({ err, response }) {
+        if (err || response.statusCode != 200) {
+          return context.done(new Error(err), {});
+        }
+
+        // API Call was a success!
+        callback(null, { data: JSON.parse(response.body) });
+      },
+      function(err) {
+        console.log(err);
+        return context.done(new Error(err), {});
+      }
+    );
+  });
+};
+
+module.exports.apiCall = (event, context, callback) => {
+  var token = tools.getToken(event.body.token);
+  var realmId = event.body.realmId;
+  if (!realmId)
+    return context.done(
+      new Error(
+        "No realm ID.  QBO calls only work if the accounting scope was passed!"
+      ),
+      {}
+    );
+  console.log(event.body);
+  context.succeed({ message: "connected" });
 };

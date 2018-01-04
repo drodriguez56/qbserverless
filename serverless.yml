@@ -60,7 +60,7 @@ provider:
 #    - exclude-me-dir/**
 
 functions:
-  createUrl:
+  qbAuthUrl:
     handler: handler.qbAuthUrl
     events:
       - http:
@@ -95,6 +95,25 @@ functions:
               - X-Amz-Security-Token
               - X-Amz-User-Agent
             allowCredentials: false
+
+  connected:
+    handler: handler.connected
+    events:
+      - http:
+          path: api/connected
+          method: post
+          integration: lambda
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: fals
+
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
