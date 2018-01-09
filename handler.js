@@ -17,6 +17,7 @@ module.exports.qbAuthUrl = (event, context, callback) => {
     // Add CSRF protection
     state: tools.generateAntiForgery({})
   });
+  //
 
   // Redirect
   console.log("Redirecting to authorization uri: " + uri);
@@ -31,6 +32,7 @@ module.exports.qbCallback = (event, context, callback) => {
   //     {}
   //   );
   // }
+  //
   tools.intuitAuth.code.getToken(event.headers.Referer).then(
     function(token) {
       console.log(token);

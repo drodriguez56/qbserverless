@@ -1,6 +1,5 @@
 {
-  "redirectUri":
-    "http://zemdash-test.s3-website-us-east-1.amazonaws.com/callback/",
+  "redirectUri": "http://test.zemdash.com:3000/callback/",
   "configurationEndpoint":
     "https://developer.api.intuit.com/.well-known/openid_sandbox_configuration/",
   "api_uri": "https://sandbox-quickbooks.api.intuit.com/v3/company/",
