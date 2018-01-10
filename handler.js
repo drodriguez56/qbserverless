@@ -11,7 +11,7 @@ function generateAntiForgery(session) {
 }
 
 module.exports.qbAuthUrl = (event, context, callback) => {
-  tools.setScopes("connect_handler");
+  tools.setScopes("sign_in_with_intuit");
   // Constructs the authorization URI.
   var uri = tools.intuitAuth.code.getUri({
     // Add CSRF protection
@@ -26,6 +26,13 @@ module.exports.qbAuthUrl = (event, context, callback) => {
 };
 
 module.exports.qbCallback = (event, context, callback) => {
+  var realmId = event.body.realmId;
+  if (!realmId) {
+    return context.done(
+      new Error("Error - cant connect without company id"),
+      {}
+    );
+  }
   // if (e)) {
   //   return context.done(
   //     new Error("Error - invalid anti-forgery CSRF response!"),
@@ -35,11 +42,8 @@ module.exports.qbCallback = (event, context, callback) => {
   //
   tools.intuitAuth.code.getToken(event.headers.Referer).then(
     function(token) {
-      console.log(token);
-      // Store token - this would be where tokens would need to be
-      // persisted (in a SQL DB, for example).
-      // tools.saveToken(req.session, token);
-      // req.session.realmId = req.query.realmId;
+      // TODO: Store token - this would be where tokens would need to be
+      // save realmIdnd token as new client on company
       var session = tools.saveToken({}, token);
       var errorFn = function(e) {
         console.log(e);
@@ -51,7 +55,6 @@ module.exports.qbCallback = (event, context, callback) => {
           jwt.validate(
             token.data.id_token,
             function() {
-              // Callback function - redirect to /connected
               callback(null, { session: session });
             },
             errorFn
@@ -60,7 +63,6 @@ module.exports.qbCallback = (event, context, callback) => {
           return errorFn(e);
         }
       } else {
-        // Redirect to /connected
         context.succeed({ message: "connected" });
       }
     },
