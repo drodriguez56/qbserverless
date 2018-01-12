@@ -1,15 +1,15 @@
-var request = require("request");
-var Tokens = require("csrf");
-var tools = require("./tools/tools.js");
-var jwt = require("./tools/jwt.js");
-var csrf = new Tokens();
-// var bluebird = require("bluebird");
+const request = require("request");
+const Tokens = require("csrf");
+const tools = require("./tools/tools.js");
+const jwt = require("./tools/jwt.js");
+const csrf = new Tokens();
+const bluebird = require("bluebird");
 
-// var mongoose = require("mongoose");
-// var User = require("./models/User.js");
-// var mongoString = process.env.MONGO_URL;
+const mongoose = require("mongoose");
+const User = require("./models/User.js");
+const mongoString = process.env.MONGO_URL;
 
-// mongoose.Promise = bluebird;
+mongoose.Promise = bluebird;
 
 function generateAntiForgery(session) {
   session.secret = csrf.secretSync();
@@ -18,8 +18,8 @@ function generateAntiForgery(session) {
 
 module.exports.qbAuthUrl = (event, context, callback) => {
   tools.setScopes("sign_in_with_intuit");
-  // varructs the authorization URI.
-  var uri = tools.intuitAuth.code.getUri({
+  // Constructs the authorization URI.
+  const uri = tools.intuitAuth.code.getUri({
     // Add CSRF protection
     state: tools.generateAntiForgery({})
   });
@@ -31,7 +31,7 @@ module.exports.qbAuthUrl = (event, context, callback) => {
 };
 
 module.exports.qbCallback = (event, context, callback) => {
-  var realmId = event.body.realmId;
+  const realmId = event.body.realmId;
   if (!realmId) {
     return context.done(
       new Error("Error - cant connect without company id"),
@@ -48,8 +48,8 @@ module.exports.qbCallback = (event, context, callback) => {
     function(token) {
       // TODO: Store token - this would be where tokens would need to be
       // save realmIdnd token as new client on company
-      var session = tools.saveToken({}, token);
-      var errorFn = function(e) {
+      const session = tools.saveToken({}, token);
+      const errorFn = function(e) {
         console.log(e);
         return context.done(new Error(e), {});
       };
@@ -78,11 +78,11 @@ module.exports.qbCallback = (event, context, callback) => {
 };
 
 module.exports.connected = (event, context, callback) => {
-  var token = tools.getToken(event.body.session);
+  const token = tools.getToken(event.body.session);
   console.log(token);
-  var url = tools.openid_configuration.userinfo_endpoint;
+  const url = tools.openid_configuration.userinfo_endpoint;
   console.log("Making API call to: " + url);
-  var requestObj = {
+  const requestObj = {
     url: url,
     headers: {
       Authorization: "Bearer " + token.accessToken,
@@ -109,8 +109,8 @@ module.exports.connected = (event, context, callback) => {
 };
 
 module.exports.apiCall = (event, context, callback) => {
-  var token = tools.getToken(event.body.token);
-  var realmId = event.body.realmId;
+  const token = tools.getToken(event.body.token);
+  const realmId = event.body.realmId;
   if (!realmId)
     return context.done(
       new Error(
@@ -123,72 +123,72 @@ module.exports.apiCall = (event, context, callback) => {
 };
 
 //USER
-// var createErrorResponse = (statusCode, message) => ({
-//   statusCode: statusCode || 501,
-//   headers: { "Content-Type": "text/plain" },
-//   body: message || "Incorrect id"
-// });
+const createErrorResponse = (statusCode, message) => ({
+  statusCode: statusCode || 501,
+  headers: { "Content-Type": "text/plain" },
+  body: message || "Incorrect id"
+});
 
-// module.exports.createUser = (event, context, callback) => {
-//   let db = {};
-//   let data = {};
-//   let errs = {};
-//   let user = {};
-//   var mongooseId = "_id";
+module.exports.createUser = (event, context, callback) => {
+  let db = {};
+  let data = {};
+  let errs = {};
+  let user = {};
+  const mongooseId = "_id";
 
-//   db = mongoose.connect(mongoString).connection;
+  db = mongoose.connect(mongoString).connection;
 
-//   data = JSON.parse(event.body);
+  data = JSON.parse(event.body);
 
-//   user = new User({
-//     email: data.email,
-//     firstname: data.firstname,
-//     lastname: data.lastname,
-//     ip: event.requestContext.identity.sourceIp
-//   });
+  user = new User({
+    email: data.email,
+    firstname: data.firstname,
+    lastname: data.lastname,
+    ip: event.requestContext.identity.sourceIp
+  });
 
-//   // errs = user.validateSync();
+  // errs = user.validateSync();
 
-//   // if (errs) {
-//   //   console.log(errs);
-//   //   callback(null, createErrorResponse(400, "Incorrect user data"));
-//   //   db.close();
-//   //   return;
-//   // }
+  // if (errs) {
+  //   console.log(errs);
+  //   callback(null, createErrorResponse(400, "Incorrect user data"));
+  //   db.close();
+  //   return;
+  // }
 
-//   db.once("open", () => {
-//     user
-//       .save()
-//       .then(() => {
-//         callback(null, {
-//           statusCode: 200,
-//           body: JSON.stringify({ id: user[mongooseId] })
-//         });
-//       })
-//       .catch(err => {
-//         callback(null, createErrorResponse(err.statusCode, err.message));
-//       })
-//       .finally(() => {
-//         db.close();
-//       });
-//   });
-// };
+  db.once("open", () => {
+    user
+      .save()
+      .then(() => {
+        callback(null, {
+          statusCode: 200,
+          body: JSON.stringify({ id: user[mongooseId] })
+        });
+      })
+      .catch(err => {
+        callback(null, createErrorResponse(err.statusCode, err.message));
+      })
+      .finally(() => {
+        db.close();
+      });
+  });
+};
 
-// module.exports.user = (event, context, callback) => {
-//   var db = mongoose.connect(mongoString).connection;
-//   var id = event.pathParameters.id;
+module.exports.user = (event, context, callback) => {
+  const db = mongoose.connect(mongoString).connection;
+  const id = event.pathParameters.id;
 
-//   db.once("open", () => {
-//     UserModel.find({ _id: event.pathParameters.id })
-//       .then(user => {
-//         callback(null, { statusCode: 200, body: JSON.stringify(user) });
-//       })
-//       .catch(err => {
-//         callback(null, createErrorResponse(err.statusCode, err.message));
-//       })
-//       .finally(() => {
-//         // Close db connection or node event loop won't exit , and lambda will timeout
-//         db.close();
-//       });
-//   });
-// };
+  db.once("open", () => {
+    UserModel.find({ _id: event.pathParameters.id })
+      .then(user => {
+        callback(null, { statusCode: 200, body: JSON.stringify(user) });
+      })
+      .catch(err => {
+        callback(null, createErrorResponse(err.statusCode, err.message));
+      })
+      .finally(() => {
+        // Close db connection or node event loop won't exit , and lambda will timeout
+        db.close();
+      });
+  });
+};
