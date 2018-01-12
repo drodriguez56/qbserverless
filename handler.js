@@ -1,13 +1,13 @@
-const request = require("request");
-const Tokens = require("csrf");
-const tools = require("./tools/tools.js");
-const jwt = require("./tools/jwt.js");
-const csrf = new Tokens();
-const bluebird = require("bluebird");
+var request = require("request");
+var Tokens = require("csrf");
+var tools = require("./tools/tools.js");
+var jwt = require("./tools/jwt.js");
+var csrf = new Tokens();
+var bluebird = require("bluebird");
 
-const mongoose = require("mongoose");
-const User = require("./models/User.js");
-const mongoString = process.env.MONGO_URL;
+var mongoose = require("mongoose");
+var User = require("./models/User.js");
+var mongoString = process.env.MONGO_URL;
 
 mongoose.Promise = bluebird;
 
@@ -18,8 +18,8 @@ function generateAntiForgery(session) {
 
 module.exports.qbAuthUrl = (event, context, callback) => {
   tools.setScopes("sign_in_with_intuit");
-  // Constructs the authorization URI.
-  const uri = tools.intuitAuth.code.getUri({
+  // varructs the authorization URI.
+  var uri = tools.intuitAuth.code.getUri({
     // Add CSRF protection
     state: tools.generateAntiForgery({})
   });
@@ -31,7 +31,7 @@ module.exports.qbAuthUrl = (event, context, callback) => {
 };
 
 module.exports.qbCallback = (event, context, callback) => {
-  const realmId = event.body.realmId;
+  var realmId = event.body.realmId;
   if (!realmId) {
     return context.done(
       new Error("Error - cant connect without company id"),
@@ -48,8 +48,8 @@ module.exports.qbCallback = (event, context, callback) => {
     function(token) {
       // TODO: Store token - this would be where tokens would need to be
       // save realmIdnd token as new client on company
-      const session = tools.saveToken({}, token);
-      const errorFn = function(e) {
+      var session = tools.saveToken({}, token);
+      var errorFn = function(e) {
         console.log(e);
         return context.done(new Error(e), {});
       };
@@ -78,11 +78,11 @@ module.exports.qbCallback = (event, context, callback) => {
 };
 
 module.exports.connected = (event, context, callback) => {
-  const token = tools.getToken(event.body.session);
+  var token = tools.getToken(event.body.session);
   console.log(token);
-  const url = tools.openid_configuration.userinfo_endpoint;
+  var url = tools.openid_configuration.userinfo_endpoint;
   console.log("Making API call to: " + url);
-  const requestObj = {
+  var requestObj = {
     url: url,
     headers: {
       Authorization: "Bearer " + token.accessToken,
@@ -109,8 +109,8 @@ module.exports.connected = (event, context, callback) => {
 };
 
 module.exports.apiCall = (event, context, callback) => {
-  const token = tools.getToken(event.body.token);
-  const realmId = event.body.realmId;
+  var token = tools.getToken(event.body.token);
+  var realmId = event.body.realmId;
   if (!realmId)
     return context.done(
       new Error(
@@ -123,7 +123,7 @@ module.exports.apiCall = (event, context, callback) => {
 };
 
 //USER
-const createErrorResponse = (statusCode, message) => ({
+var createErrorResponse = (statusCode, message) => ({
   statusCode: statusCode || 501,
   headers: { "Content-Type": "text/plain" },
   body: message || "Incorrect id"
@@ -134,7 +134,7 @@ module.exports.createUser = (event, context, callback) => {
   let data = {};
   let errs = {};
   let user = {};
-  const mongooseId = "_id";
+  var mongooseId = "_id";
 
   db = mongoose.connect(mongoString).connection;
 
@@ -175,8 +175,8 @@ module.exports.createUser = (event, context, callback) => {
 };
 
 module.exports.user = (event, context, callback) => {
-  const db = mongoose.connect(mongoString).connection;
-  const id = event.pathParameters.id;
+  var db = mongoose.connect(mongoString).connection;
+  var id = event.pathParameters.id;
 
   db.once("open", () => {
     UserModel.find({ _id: event.pathParameters.id })
