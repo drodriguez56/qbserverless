@@ -46,6 +46,7 @@ module.exports.qbCallback = (event, context, callback) => {
   //   );
   // }
   //
+
   tools.intuitAuth.code.getToken(event.headers.Referer).then(
     function(token) {
       // TODO: Store token - this would be where tokens would need to be
@@ -81,7 +82,6 @@ module.exports.qbCallback = (event, context, callback) => {
 
 module.exports.connected = (event, context, callback) => {
   const token = tools.getToken(event.body.session);
-  console.log(token);
   const url = tools.openid_configuration.userinfo_endpoint;
   console.log("Making API call to: " + url);
   const requestObj = {
@@ -100,7 +100,50 @@ module.exports.connected = (event, context, callback) => {
         }
 
         // API Call was a success!
-        callback(null, { data: JSON.parse(response.body) });
+        const data = JSON.parse(response.body);
+        console.log(data);
+        let db = {};
+        let errs = {};
+        let user = {};
+        const mongooseId = "_id";
+
+        db = mongoose.connect(mongoString, {
+          useMongoClient: true
+          /* other options */
+        });
+        user = new User({
+          email: data.email,
+          firstname: data.givenName,
+          lastname: data.familyName,
+          ip: event.requestContext.identity.sourceIp
+        });
+        //
+        // errs = user.validateSync();
+
+        // if (errs) {
+        //   console.log(errs);
+        //   callback(null, createErrorResponse(400, "Incorrect user data"));
+        //   db.close();
+        //   return;
+        // }
+        ///
+        console.log("starting db save");
+        db.once("open", () => {
+          user
+            .save()
+            .then(() => {
+              callback(null, {
+                statusCode: 200,
+                body: JSON.stringify({ id: user[mongooseId] })
+              });
+            })
+            .catch(err => {
+              callback(null, createErrorResponse(err.statusCode, err.message));
+            })
+            .finally(() => {
+              db.close();
+            });
+        });
       },
       function(err) {
         console.log(err);
