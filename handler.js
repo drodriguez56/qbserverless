@@ -3,13 +3,13 @@ var Tokens = require("csrf");
 var tools = require("./tools/tools.js");
 var jwt = require("./tools/jwt.js");
 var csrf = new Tokens();
-var bluebird = require("bluebird");
+// var bluebird = require("bluebird");
 
-var mongoose = require("mongoose");
-var User = require("./models/User.js");
-var mongoString = process.env.MONGO_URL;
+// var mongoose = require("mongoose");
+// var User = require("./models/User.js");
+// var mongoString = process.env.MONGO_URL;
 
-mongoose.Promise = bluebird;
+// mongoose.Promise = bluebird;
 
 function generateAntiForgery(session) {
   session.secret = csrf.secretSync();
@@ -123,72 +123,72 @@ module.exports.apiCall = (event, context, callback) => {
 };
 
 //USER
-var createErrorResponse = (statusCode, message) => ({
-  statusCode: statusCode || 501,
-  headers: { "Content-Type": "text/plain" },
-  body: message || "Incorrect id"
-});
+// var createErrorResponse = (statusCode, message) => ({
+//   statusCode: statusCode || 501,
+//   headers: { "Content-Type": "text/plain" },
+//   body: message || "Incorrect id"
+// });
 
-module.exports.createUser = (event, context, callback) => {
-  let db = {};
-  let data = {};
-  let errs = {};
-  let user = {};
-  var mongooseId = "_id";
+// module.exports.createUser = (event, context, callback) => {
+//   let db = {};
+//   let data = {};
+//   let errs = {};
+//   let user = {};
+//   var mongooseId = "_id";
 
-  db = mongoose.connect(mongoString).connection;
+//   db = mongoose.connect(mongoString).connection;
 
-  data = JSON.parse(event.body);
+//   data = JSON.parse(event.body);
 
-  user = new User({
-    email: data.email,
-    firstname: data.firstname,
-    lastname: data.lastname,
-    ip: event.requestContext.identity.sourceIp
-  });
+//   user = new User({
+//     email: data.email,
+//     firstname: data.firstname,
+//     lastname: data.lastname,
+//     ip: event.requestContext.identity.sourceIp
+//   });
 
-  // errs = user.validateSync();
+//   // errs = user.validateSync();
 
-  // if (errs) {
-  //   console.log(errs);
-  //   callback(null, createErrorResponse(400, "Incorrect user data"));
-  //   db.close();
-  //   return;
-  // }
+//   // if (errs) {
+//   //   console.log(errs);
+//   //   callback(null, createErrorResponse(400, "Incorrect user data"));
+//   //   db.close();
+//   //   return;
+//   // }
 
-  db.once("open", () => {
-    user
-      .save()
-      .then(() => {
-        callback(null, {
-          statusCode: 200,
-          body: JSON.stringify({ id: user[mongooseId] })
-        });
-      })
-      .catch(err => {
-        callback(null, createErrorResponse(err.statusCode, err.message));
-      })
-      .finally(() => {
-        db.close();
-      });
-  });
-};
+//   db.once("open", () => {
+//     user
+//       .save()
+//       .then(() => {
+//         callback(null, {
+//           statusCode: 200,
+//           body: JSON.stringify({ id: user[mongooseId] })
+//         });
+//       })
+//       .catch(err => {
+//         callback(null, createErrorResponse(err.statusCode, err.message));
+//       })
+//       .finally(() => {
+//         db.close();
+//       });
+//   });
+// };
 
-module.exports.user = (event, context, callback) => {
-  var db = mongoose.connect(mongoString).connection;
-  var id = event.pathParameters.id;
+// module.exports.user = (event, context, callback) => {
+//   var db = mongoose.connect(mongoString).connection;
+//   var id = event.pathParameters.id;
 
-  db.once("open", () => {
-    UserModel.find({ _id: event.pathParameters.id })
-      .then(user => {
-        callback(null, { statusCode: 200, body: JSON.stringify(user) });
-      })
-      .catch(err => {
-        callback(null, createErrorResponse(err.statusCode, err.message));
-      })
-      .finally(() => {
-        // Close db connection or node event loop won't exit , and lambda will timeout
-        db.close();
-      });
-  });
-};
+//   db.once("open", () => {
+//     UserModel.find({ _id: event.pathParameters.id })
+//       .then(user => {
+//         callback(null, { statusCode: 200, body: JSON.stringify(user) });
+//       })
+//       .catch(err => {
+//         callback(null, createErrorResponse(err.statusCode, err.message));
+//       })
+//       .finally(() => {
+//         // Close db connection or node event loop won't exit , and lambda will timeout
+//         db.close();
+//       });
+//   });
+// };
