@@ -151,7 +151,7 @@ module.exports.createUser = (event, context, callback) => {
     lastname: data.lastname,
     ip: event.requestContext.identity.sourceIp
   });
-
+  //
   // errs = user.validateSync();
 
   // if (errs) {
