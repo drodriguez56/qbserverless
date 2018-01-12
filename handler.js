@@ -136,7 +136,7 @@ module.exports.createUser = (event, context, callback) => {
   let user = {};
   const mongooseId = "_id";
 
-  var promiseDb = mongoose.connect(mongoString, {
+  var db = mongoose.connect(mongoString, {
     useMongoClient: true
     /* other options */
   });
@@ -159,23 +159,21 @@ module.exports.createUser = (event, context, callback) => {
   //   return;
   // }
   ///
-  promiseDb.then(db => {
-    db.once("open", () => {
-      user
-        .save()
-        .then(() => {
-          callback(null, {
-            statusCode: 200,
-            body: JSON.stringify({ id: user[mongooseId] })
-          });
-        })
-        .catch(err => {
-          callback(null, createErrorResponse(err.statusCode, err.message));
-        })
-        .finally(() => {
-          db.close();
+  db.once("open", () => {
+    user
+      .save()
+      .then(() => {
+        callback(null, {
+          statusCode: 200,
+          body: JSON.stringify({ id: user[mongooseId] })
         });
-    });
+      })
+      .catch(err => {
+        callback(null, createErrorResponse(err.statusCode, err.message));
+      })
+      .finally(() => {
+        db.close();
+      });
   });
 };
 
