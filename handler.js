@@ -155,7 +155,7 @@ module.exports.createUser = (event, context, callback) => {
   //   db.close();
   //   return;
   // }
-
+  ///
   db.once("open", () => {
     user
       .save()
