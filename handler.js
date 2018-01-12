@@ -136,7 +136,7 @@ module.exports.createUser = (event, context, callback) => {
   let user = {};
   const mongooseId = "_id";
 
-  var db = mongoose.connect(mongoString, {
+  db = mongoose.connect(mongoString, {
     useMongoClient: true
     /* other options */
   });
