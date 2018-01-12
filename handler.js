@@ -180,11 +180,14 @@ module.exports.createUser = (event, context, callback) => {
 };
 
 module.exports.user = (event, context, callback) => {
-  const db = mongoose.connect(mongoString).connection;
+  db = mongoose.connect(mongoString, {
+    useMongoClient: true
+    /* other options */
+  });
   const id = event.pathParameters.id;
 
   db.once("open", () => {
-    UserModel.find({ _id: event.pathParameters.id })
+    User.find({ _id: event.pathParameters.id })
       .then(user => {
         callback(null, { statusCode: 200, body: JSON.stringify(user) });
       })
