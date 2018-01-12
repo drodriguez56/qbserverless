@@ -114,39 +114,22 @@ functions:
               - X-Amz-User-Agent
             allowCredentials: false
 
-  # createUser:
-  #   handler: handler.createUser
-  #   events:
-  #     - http:
-  #         path: user
-  #         method: post
-  #         cors:
-  #           origin: '*'
-  #           headers:
-  #             - Content-Type
-  #             - X-Amz-Date
-  #             - Authorization
-  #             - X-Api-Key
-  #             - X-Amz-Security-Token
-  #             - X-Amz-User-Agent
-  #           allowCredentials: false
+  createUser:
+    handler: handler.createUser
+    events:
+      - http:
+          path: user
+          method: post
+          cors: true
 
-  # user:
-  #   handler: handler.user
-  #   events:
-  #     - http:
-  #         path: user/{id}
-  #         method: get
-  #         cors:
-  #           origin: '*'
-  #           headers:
-  #             - Content-Type
-  #             - X-Amz-Date
-  #             - Authorization
-  #             - X-Api-Key
-  #             - X-Amz-Security-Token
-  #             - X-Amz-User-Agent
-  #           allowCredentials: false
+  user:
+    handler: handler.user
+    events:
+      - http:
+          path: user/{id}
+          method: get
+          cors:
+            origin: true
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
