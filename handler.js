@@ -178,12 +178,6 @@ module.exports.user = (event, context, callback) => {
   var db = mongoose.connect(mongoString).connection;
   var id = event.pathParameters.id;
 
-  if (!validator.isAlphanumeric(id)) {
-    callback(null, createErrorResponse(400, "Incorrect id"));
-    db.close();
-    return;
-  }
-
   db.once("open", () => {
     UserModel.find({ _id: event.pathParameters.id })
       .then(user => {
