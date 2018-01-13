@@ -73,16 +73,7 @@ functions:
           path: api/qbAuthUrl
           method: get
           integration: lambda
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - X-Amz-Date
-              - Authorization
-              - X-Api-Key
-              - X-Amz-Security-Token
-              - X-Amz-User-Agent
-            allowCredentials: false
+          cors: true
 
   qbCallback:
     handler: handler.qbCallback
@@ -91,16 +82,7 @@ functions:
           path: api/qbCallback
           method: post
           integration: lambda
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - X-Amz-Date
-              - Authorization
-              - X-Api-Key
-              - X-Amz-Security-Token
-              - X-Amz-User-Agent
-            allowCredentials: false
+          cors: true
 
   connected:
     handler: handler.connected
@@ -110,16 +92,7 @@ functions:
           path: api/connected
           method: post
           integration: lambda
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - X-Amz-Date
-              - Authorization
-              - X-Api-Key
-              - X-Amz-Security-Token
-              - X-Amz-User-Agent
-            allowCredentials: false
+          cors: true
 
   createUser:
     handler: handler.createUser
