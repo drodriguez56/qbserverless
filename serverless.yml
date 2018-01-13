@@ -13,16 +13,22 @@
 
 service: quickbooksAuth
 
+# Use serverless-webpack plugin to transpile ES6/ES7
+plugins:
+  - serverless-webpack
+
 # You can pin your service to only deploy with a specific Serverless version
 # Check out our docs for more details
 # frameworkVersion: "=X.X.X"
 
 custom:
   stage: "${opt:stage, self:provider.stage}"
+  webpackIncludeModules: true
 provider:
   name: aws
   runtime: nodejs6.10
   stage: dev
+  region: us-east-1
   profile: user2
   environment: ${file(env.yml):${self:custom.stage}}
 
