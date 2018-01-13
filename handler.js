@@ -6,7 +6,7 @@ const csrf = new Tokens();
 const bluebird = require("bluebird");
 
 const mongoose = require("mongoose");
-const User = require("./models/User.js");
+const User = require("./src/models/User.js");
 const mongoString = process.env.MONGO_URL;
 
 mongoose.Promise = bluebird;
