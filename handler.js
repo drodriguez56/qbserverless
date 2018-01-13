@@ -222,6 +222,7 @@ export const createUser = (event, context, callback) => {
 };
 
 export const user = (event, context, callback) => {
+  let db = {};
   db = mongoose.connect(mongoString, {
     useMongoClient: true
     /* other options */
