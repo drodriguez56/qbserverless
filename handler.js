@@ -11,10 +11,10 @@ const mongoString = process.env.MONGO_URL;
 
 mongoose.Promise = bluebird;
 
-function generateAntiForgery(session) {
+const generateAntiForgery = session => {
   session.secret = csrf.secretSync();
   return csrf.create(session.secret);
-}
+};
 
 export const qbAuthUrl = (event, context, callback) => {
   tools.setScopes("sign_in_with_intuit");
@@ -52,7 +52,7 @@ export const qbCallback = (event, context, callback) => {
       // TODO: Store token - this would be where tokens would need to be
       // save realmIdnd token as new client on company
       const session = tools.saveToken({}, token);
-      const errorFn = function(e) {
+      const errorFn = e => {
         console.log(e);
         return context.done(new Error(e), {});
       };
@@ -61,7 +61,7 @@ export const qbCallback = (event, context, callback) => {
           // We should decode and validate the ID token
           jwt.validate(
             token.data.id_token,
-            function() {
+            () => {
               callback(null, { session: session });
             },
             errorFn
@@ -73,7 +73,7 @@ export const qbCallback = (event, context, callback) => {
         context.succeed({ message: "connected" });
       }
     },
-    function(err) {
+    err => {
       console.log(err);
       return errorFn(err);
     }
@@ -91,10 +91,10 @@ export const connected = (event, context, callback) => {
       Accept: "application/json"
     }
   };
-  request(requestObj, function(err, response) {
+  request(requestObj, (err, response) => {
     // Check if 401 response was returned - refresh tokens if so!
     tools.checkForUnauthorized(event.body, requestObj, err, response).then(
-      function({ err, response }) {
+      ({ err, response }) => {
         if (err || response.statusCode != 200) {
           return context.done(new Error(err), {});
         }
@@ -144,7 +144,7 @@ export const connected = (event, context, callback) => {
             });
         });
       },
-      function(err) {
+      err => {
         console.log(err);
         return context.done(new Error(err), {});
       }
