@@ -1,12 +1,21 @@
-const request = require("request");
-const Tokens = require("csrf");
-const tools = require("./tools/tools.js");
-const jwt = require("./tools/jwt.js");
-const csrf = new Tokens();
-const bluebird = require("bluebird");
+import request from "request";
+import Tokens from "csrf";
+import tools from "./tools/tools";
+import jwt from "./tools/jwt";
+import bluebird from "bluebird";
 
-const mongoose = require("mongoose");
-const User = require("./src/models/User.js");
+import mongoose from "mongoose";
+import User from "./src/models/User";
+
+// const request = require("request");
+// const Tokens = require("csrf");
+// const tools = require("./tools/tools.js");
+// const jwt = require("./tools/jwt.js");
+const csrf = new Tokens();
+// const bluebird = require("bluebird");
+
+// const mongoose = require("mongoose");
+// const User = require("./src/models/User.js");
 const mongoString = process.env.MONGO_URL;
 
 mongoose.Promise = bluebird;
