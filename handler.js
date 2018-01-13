@@ -114,8 +114,7 @@ module.exports.connected = (event, context, callback) => {
         user = new User({
           email: data.email,
           firstname: data.givenName,
-          lastname: data.familyName,
-          ip: event.requestContext.identity.sourceIp
+          lastname: data.familyName
         });
         //
         // errs = user.validateSync();
