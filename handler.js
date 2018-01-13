@@ -16,7 +16,7 @@ function generateAntiForgery(session) {
   return csrf.create(session.secret);
 }
 
-module.exports.qbAuthUrl = (event, context, callback) => {
+export const qbAuthUrl = (event, context, callback) => {
   tools.setScopes("sign_in_with_intuit");
   // Constructs the authorization URI.
   const uri = tools.intuitAuth.code.getUri({
@@ -31,7 +31,7 @@ module.exports.qbAuthUrl = (event, context, callback) => {
   context.succeed({ location: uri });
 };
 
-module.exports.qbCallback = (event, context, callback) => {
+export const qbCallback = (event, context, callback) => {
   const realmId = event.body.realmId;
   if (!realmId) {
     return context.done(
@@ -80,7 +80,7 @@ module.exports.qbCallback = (event, context, callback) => {
   );
 };
 
-module.exports.connected = (event, context, callback) => {
+export const connected = (event, context, callback) => {
   const token = tools.getToken(event.body.session);
   const url = tools.openid_configuration.userinfo_endpoint;
   console.log("Making API call to: " + url);
@@ -152,7 +152,7 @@ module.exports.connected = (event, context, callback) => {
   });
 };
 
-module.exports.apiCall = (event, context, callback) => {
+export const apiCall = (event, context, callback) => {
   const token = tools.getToken(event.body.token);
   const realmId = event.body.realmId;
   if (!realmId)
@@ -173,7 +173,7 @@ const createErrorResponse = (statusCode, message) => ({
   body: message || "Incorrect id"
 });
 
-module.exports.createUser = (event, context, callback) => {
+export const createUser = (event, context, callback) => {
   let db = {};
   let data = {};
   let errs = {};
@@ -221,7 +221,7 @@ module.exports.createUser = (event, context, callback) => {
   });
 };
 
-module.exports.user = (event, context, callback) => {
+export const user = (event, context, callback) => {
   db = mongoose.connect(mongoString, {
     useMongoClient: true
     /* other options */
