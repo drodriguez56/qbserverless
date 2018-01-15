@@ -11,7 +11,7 @@
 #
 # Happy Coding!
 
-service: quickbooksAuth
+service: testqb
 
 # Use serverless-webpack plugin to transpile ES6/ES7
 plugins:
@@ -98,7 +98,7 @@ functions:
     handler: handler.createUser
     events:
       - http:
-          path: user
+          path: api/user
           method: post
           cors: true
 
@@ -106,7 +106,7 @@ functions:
     handler: handler.user
     events:
       - http:
-          path: user/{id}
+          path: api/user/{id}
           method: get
           cors:
             origin: true

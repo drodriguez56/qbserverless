@@ -138,6 +138,7 @@ export const connected = (event, context, callback) => {
               });
             })
             .catch(err => {
+              console.log(err);
               callback(null, createErrorResponse(err.statusCode, err.message));
             })
             .finally(() => {
