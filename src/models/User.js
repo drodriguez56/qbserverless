@@ -1,6 +1,9 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
-
+const tokenSchema = new Schema({
+  accessToken: String,
+  refreshToken: String
+});
 const UserSchema = new Schema({
   email: {
     type: String,
@@ -11,7 +14,8 @@ const UserSchema = new Schema({
   },
   lastname: {
     type: String
-  }
+  },
+  token: tokenSchema
 });
 
 const User = mongoose.model("user", UserSchema);

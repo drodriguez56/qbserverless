@@ -24,7 +24,6 @@ export const qbAuthUrl = (event, context, callback) => {
     // Add CSRF protection
     state: tools.generateAntiForgery({})
   });
-  //
 
   // Redirect
   console.log("Redirecting to authorization uri: " + uri);
@@ -102,7 +101,6 @@ export const connected = (event, context, callback) => {
 
         // API Call was a success!
         const data = JSON.parse(response.body);
-        console.log(data);
         let db = {};
         let errs = {};
         let user = {};
@@ -115,7 +113,11 @@ export const connected = (event, context, callback) => {
         user = new User({
           email: data.email,
           firstname: data.givenName,
-          lastname: data.familyName
+          lastname: data.familyName,
+          token: {
+            accessToken: event.body.session.accessToken,
+            refreshToken: event.body.session.refreshToken
+          }
         });
         //
         // errs = user.validateSync();
