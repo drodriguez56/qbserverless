@@ -73,7 +73,16 @@ functions:
           path: api/qbAuthUrl
           method: get
           integration: lambda
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
 
   qbCallback:
     handler: handler.qbCallback
@@ -82,7 +91,16 @@ functions:
           path: api/qbCallback
           method: post
           integration: lambda
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
 
   connected:
     handler: handler.connected
@@ -92,7 +110,16 @@ functions:
           path: api/connected
           method: post
           integration: lambda
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
 
   createUser:
     handler: handler.createUser
@@ -100,7 +127,16 @@ functions:
       - http:
           path: api/user
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
 
   user:
     handler: handler.user
@@ -109,7 +145,15 @@ functions:
           path: api/user/{id}
           method: get
           cors:
-            origin: true
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
