@@ -122,10 +122,10 @@ functions:
             allowCredentials: false
 
   createUser:
-    handler: handler.createUser
+    handler: handler.createCompany
     events:
       - http:
-          path: api/user
+          path: api/company
           method: post
           cors:
             origin: '*'

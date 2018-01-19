@@ -6,6 +6,7 @@ import bluebird from "bluebird";
 
 import mongoose from "mongoose";
 import User from "./src/models/User";
+import Company from "./src/models/Company";
 
 const csrf = new Tokens();
 const mongoString = process.env.MONGO_URL;
@@ -46,16 +47,15 @@ export const qbCallback = (event, context, callback) => {
   //   );
   // }
   //
-
+  const errorFn = e => {
+    console.log(e);
+    return callback(new Error(e), {});
+  };
   tools.intuitAuth.code.getToken(event.headers.Referer).then(
     function(token) {
       // TODO: Store token - this would be where tokens would need to be
       // save realmIdnd token as new client on company
       const session = tools.saveToken({}, token);
-      const errorFn = e => {
-        console.log(e);
-        return context.done(new Error(e), {});
-      };
       if (token.data.id_token) {
         try {
           // We should decode and validate the ID token
@@ -70,11 +70,10 @@ export const qbCallback = (event, context, callback) => {
           return errorFn(e);
         }
       } else {
-        context.succeed({ message: "connected" });
+        callback(null, { message: "connected" });
       }
     },
     err => {
-      console.log(err);
       return errorFn(err);
     }
   );
@@ -177,7 +176,7 @@ const createErrorResponse = (statusCode, message) => ({
   body: message || "Incorrect id"
 });
 
-export const createUser = (event, context, callback) => {
+export const createCompany = (event, context, callback) => {
   let db = {};
   let data = {};
   let errs = {};
@@ -191,29 +190,27 @@ export const createUser = (event, context, callback) => {
 
   data = JSON.parse(event.body);
 
-  user = new User({
+  company = new Company({
     email: data.email,
-    firstname: data.firstname,
-    lastname: data.lastname,
     ip: event.requestContext.identity.sourceIp
   });
   //
-  // errs = user.validateSync();
+  // errs = company.validateSync();
 
   // if (errs) {
   //   console.log(errs);
-  //   callback(null, createErrorResponse(400, "Incorrect user data"));
+  //   callback(null, createErrorResponse(400, "Incorrect company data"));
   //   db.close();
   //   return;
   // }
   ///
   db.once("open", () => {
-    user
+    company
       .save()
       .then(() => {
         callback(null, {
           statusCode: 200,
-          body: JSON.stringify({ id: user[mongooseId] })
+          body: JSON.stringify({ id: company[mongooseId] })
         });
       })
       .catch(err => {
