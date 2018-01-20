@@ -121,7 +121,7 @@ functions:
               - X-Amz-User-Agent
             allowCredentials: false
 
-  createUser:
+  createCompany:
     handler: handler.createCompany
     events:
       - http:

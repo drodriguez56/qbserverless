@@ -1,5 +1,4 @@
-import mongose from "mongoose";
-import User from "./User";
+import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
 const CompanySchema = new Schema({
@@ -7,7 +6,7 @@ const CompanySchema = new Schema({
     type: String,
     required: true
   },
-  Users: [User]
+  users: [{ type: Schema.Types.ObjectId, ref: "user" }]
 });
 
 const Company = mongoose.model("company", CompanySchema);

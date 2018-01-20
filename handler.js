@@ -80,6 +80,14 @@ export const qbCallback = (event, context, callback) => {
 };
 
 export const connected = (event, context, callback) => {
+  const realmId = event.body.realmId;
+  if (!realmId)
+    return context.done(
+      new Error(
+        "No realm ID.  QBO calls only work if the accounting scope was passed!"
+      ),
+      {}
+    );
   const token = tools.getToken(event.body.session);
   const url = tools.openid_configuration.userinfo_endpoint;
   console.log("Making API call to: " + url);
@@ -107,7 +115,6 @@ export const connected = (event, context, callback) => {
 
         db = mongoose.connect(mongoString, {
           useMongoClient: true
-          /* other options */
         });
         user = new User({
           email: data.email,
@@ -118,7 +125,6 @@ export const connected = (event, context, callback) => {
             refreshToken: event.body.session.refreshToken
           }
         });
-        //
         // errs = user.validateSync();
 
         // if (errs) {
@@ -130,8 +136,13 @@ export const connected = (event, context, callback) => {
         ///
         console.log("starting db save");
         db.once("open", () => {
-          user
-            .save()
+          Company.findById(realmId)
+            .then(company => {
+              return user.save().then(() => {
+                company.users.push(user);
+                return company.save();
+              });
+            })
             .then(() => {
               callback(null, {
                 statusCode: 200,
@@ -146,6 +157,23 @@ export const connected = (event, context, callback) => {
               db.close();
             });
         });
+        // db.once("open", () => {
+        //   user
+        //     .save()
+        //     .then(() => {
+        //       callback(null, {
+        //         statusCode: 200,
+        //         body: JSON.stringify({ id: user[mongooseId] })
+        //       });
+        //     })
+        //     .catch(err => {
+        //       console.log(err);
+        //       callback(null, createErrorResponse(err.statusCode, err.message));
+        //     })
+        //     .finally(() => {
+        //       db.close();
+        //     });
+        // });
       },
       err => {
         console.log(err);
@@ -180,12 +208,11 @@ export const createCompany = (event, context, callback) => {
   let db = {};
   let data = {};
   let errs = {};
-  let user = {};
+  let company = {};
   const mongooseId = "_id";
 
   db = mongoose.connect(mongoString, {
     useMongoClient: true
-    /* other options */
   });
 
   data = JSON.parse(event.body);
@@ -203,7 +230,6 @@ export const createCompany = (event, context, callback) => {
   //   db.close();
   //   return;
   // }
-  ///
   db.once("open", () => {
     company
       .save()
