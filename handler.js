@@ -2,6 +2,7 @@ import request from "request";
 import Tokens from "csrf";
 import tools from "./tools/tools";
 import jwt from "./tools/jwt";
+import decode from "jwt-decode";
 import bluebird from "bluebird";
 
 import mongoose from "mongoose";
@@ -26,7 +27,6 @@ export const qbAuthUrl = (event, context, callback) => {
     state: tools.generateAntiForgery({})
   });
 
-  // Redirect
   console.log("Redirecting to authorization uri: " + uri);
 
   context.succeed({ location: uri });
@@ -46,7 +46,6 @@ export const qbCallback = (event, context, callback) => {
   //     {}
   //   );
   // }
-  //
   const errorFn = e => {
     console.log(e);
     return callback(new Error(e), {});
@@ -206,7 +205,6 @@ const createErrorResponse = (statusCode, message) => ({
 
 export const createCompany = (event, context, callback) => {
   let db = {};
-  let data = {};
   let errs = {};
   let company = {};
   const mongooseId = "_id";
@@ -215,32 +213,18 @@ export const createCompany = (event, context, callback) => {
     useMongoClient: true
   });
 
-  data = JSON.parse(event.body);
-
   company = new Company({
-    email: data.email,
-    ip: event.requestContext.identity.sourceIp
+    email: event.request.userAttributes.email
   });
-  //
-  // errs = company.validateSync();
 
-  // if (errs) {
-  //   console.log(errs);
-  //   callback(null, createErrorResponse(400, "Incorrect company data"));
-  //   db.close();
-  //   return;
-  // }
   db.once("open", () => {
     company
       .save()
       .then(() => {
-        callback(null, {
-          statusCode: 200,
-          body: JSON.stringify({ id: company[mongooseId] })
-        });
+        return context.succeed(event);
       })
       .catch(err => {
-        callback(null, createErrorResponse(err.statusCode, err.message));
+        return context.fail("Signup Failed. to saved to DB");
       })
       .finally(() => {
         db.close();
@@ -260,6 +244,42 @@ export const user = (event, context, callback) => {
     User.find({ _id: event.pathParameters.id })
       .then(user => {
         callback(null, { statusCode: 200, body: JSON.stringify(user) });
+      })
+      .catch(err => {
+        callback(null, createErrorResponse(err.statusCode, err.message));
+      })
+      .finally(() => {
+        // Close db connection or node event loop won't exit , and lambda will timeout
+        db.close();
+      });
+  });
+};
+
+export const company = (event, context, callback) => {
+  const token = decode(event.headers.Authorization);
+  console.log(token);
+
+  const response = company => ({
+    statusCode: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*" // Required for CORS support to work
+    },
+    body: JSON.stringify(company)
+  });
+
+  let db = {};
+  db = mongoose.connect(mongoString, {
+    useMongoClient: true
+    /* other options */
+  });
+
+  db.once("open", () => {
+    Company.findOne({ email: token.email })
+      .populate({
+        path: "users"
+      })
+      .then(company => {
+        callback(null, response(company));
       })
       .catch(err => {
         callback(null, createErrorResponse(err.statusCode, err.message));

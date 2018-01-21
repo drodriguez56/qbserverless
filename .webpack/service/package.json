@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "request": "^2.83.0",
+    "mongoose": "^4.13.9",
+    "csrf": "^3.0.6",
+    "babel-runtime": "^6.26.0",
+    "client-oauth2": "^4.1.0",
+    "btoa": "^1.1.2",
+    "atob": "^2.0.3",
+    "expect": "^22.0.3",
+    "jsonwebtoken": "^8.1.0",
+    "rsa-pem-from-mod-exp": "^0.8.4",
+    "jwt-decode": "^2.2.0",
+    "bluebird": "^3.5.1"
+  }
+}

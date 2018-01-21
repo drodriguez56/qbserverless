@@ -52,7 +52,8 @@ module.exports.authorize = (event, context, cb) => {
         const pem = jwkToPem(jwkArray);
 
         // Verify the token:
-        jwk.verify(token, pem, { issuer: iss }, (err, decoded) => {
+        // { issuer: iss } ? Unauthorized user: jwt issuer invalid.
+        jwk.verify(token, pem, (err, decoded) => {
           if (err) {
             console.log("Unauthorized user:", err.message);
             cb("Unauthorized");
