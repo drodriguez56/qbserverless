@@ -137,13 +137,15 @@ functions:
               - X-Amz-Security-Token
               - X-Amz-User-Agent
             allowCredentials: false
-
+  auth:
+    handler: auth.authorize
   user:
     handler: handler.user
     events:
       - http:
           path: api/user/{id}
           method: get
+          authorizer: auth
           cors:
             origin: '*'
             headers:
