@@ -122,17 +122,9 @@ export const connected = (event, context, callback) => {
           token: {
             accessToken: event.body.session.accessToken,
             refreshToken: event.body.session.refreshToken
-          }
+          },
+          realmId
         });
-        // errs = user.validateSync();
-
-        // if (errs) {
-        //   console.log(errs);
-        //   callback(null, createErrorResponse(400, "Incorrect user data"));
-        //   db.close();
-        //   return;
-        // }
-        ///
         console.log("starting db save");
         db.once("open", () => {
           Company.findById(realmId)
@@ -156,23 +148,6 @@ export const connected = (event, context, callback) => {
               db.close();
             });
         });
-        // db.once("open", () => {
-        //   user
-        //     .save()
-        //     .then(() => {
-        //       callback(null, {
-        //         statusCode: 200,
-        //         body: JSON.stringify({ id: user[mongooseId] })
-        //       });
-        //     })
-        //     .catch(err => {
-        //       console.log(err);
-        //       callback(null, createErrorResponse(err.statusCode, err.message));
-        //     })
-        //     .finally(() => {
-        //       db.close();
-        //     });
-        // });
       },
       err => {
         console.log(err);

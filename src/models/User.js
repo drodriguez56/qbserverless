@@ -15,7 +15,8 @@ const UserSchema = new Schema({
   lastname: {
     type: String
   },
-  token: tokenSchema
+  token: tokenSchema,
+  realmId: String
 });
 
 const User = mongoose.model("user", UserSchema);
