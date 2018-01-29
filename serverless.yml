@@ -137,15 +137,12 @@ functions:
               - X-Amz-Security-Token
               - X-Amz-User-Agent
             allowCredentials: false
-  auth:
-    handler: auth.authorize
   user:
     handler: handler.user
     events:
       - http:
           path: api/user/{id}
           method: get
-          authorizer: auth
           cors:
             origin: '*'
             headers:
@@ -160,9 +157,26 @@ functions:
     handler: handler.company
     events:
       - http:
-          path: api/company
+          path: api/company/{id}
           method: get
-          authorizer: auth
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+  loadReport:
+    handler: handler.loadReport
+    timeout: 30
+    events:
+      - http:
+          path: api/report
+          method: post
+          integration: lambda
           cors:
             origin: '*'
             headers:

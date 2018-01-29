@@ -73,16 +73,22 @@ module.exports = require("request");
 /* 1 */
 /***/ (function(module, exports) {
 
-module.exports = require("mongoose");
+module.exports = {"redirectUri":"http://localhost:3000/callback/","configurationEndpoint":"https://developer.api.intuit.com/.well-known/openid_sandbox_configuration/","api_uri":"https://sandbox-quickbooks.api.intuit.com/v3/company/","scopes":{"sign_in_with_intuit":["openid","profile","email","phone","address"],"connect_to_quickbooks":["com.intuit.quickbooks.accounting"],"connect_handler":["com.intuit.quickbooks.accounting","openid","profile","email","phone","address"]}}
 
 /***/ }),
 /* 2 */
 /***/ (function(module, exports) {
 
-module.exports = require("csrf");
+module.exports = require("mongoose");
 
 /***/ }),
 /* 3 */
+/***/ (function(module, exports) {
+
+module.exports = require("csrf");
+
+/***/ }),
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -94,11 +100,11 @@ var _promise2 = _interopRequireDefault(_promise);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var Tokens = __webpack_require__(2);
+var Tokens = __webpack_require__(3);
 var csrf = new Tokens();
 var ClientOAuth2 = __webpack_require__(8);
 var request = __webpack_require__(0);
-var config = __webpack_require__(4);
+var config = __webpack_require__(1);
 
 var Tools = function Tools() {
   var tools = this;
@@ -244,12 +250,6 @@ var Tools = function Tools() {
 module.exports = new Tools();
 
 /***/ }),
-/* 4 */
-/***/ (function(module, exports) {
-
-module.exports = {"redirectUri":"http://localhost:3000/callback/","configurationEndpoint":"https://developer.api.intuit.com/.well-known/openid_sandbox_configuration/","api_uri":"https://sandbox-quickbooks.api.intuit.com/v3/company/","scopes":{"sign_in_with_intuit":["openid","profile","email","phone","address"],"connect_to_quickbooks":["com.intuit.quickbooks.accounting"],"connect_handler":["com.intuit.quickbooks.accounting","openid","profile","email","phone","address"]}}
-
-/***/ }),
 /* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -259,7 +259,7 @@ module.exports = {"redirectUri":"http://localhost:3000/callback/","configuration
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.company = exports.user = exports.createCompany = exports.apiCall = exports.connected = exports.qbCallback = exports.qbAuthUrl = undefined;
+exports.loadReport = exports.company = exports.user = exports.createCompany = exports.connected = exports.qbCallback = exports.qbAuthUrl = undefined;
 
 var _stringify = __webpack_require__(6);
 
@@ -269,11 +269,11 @@ var _request = __webpack_require__(0);
 
 var _request2 = _interopRequireDefault(_request);
 
-var _csrf = __webpack_require__(2);
+var _csrf = __webpack_require__(3);
 
 var _csrf2 = _interopRequireDefault(_csrf);
 
-var _tools = __webpack_require__(3);
+var _tools = __webpack_require__(4);
 
 var _tools2 = _interopRequireDefault(_tools);
 
@@ -289,7 +289,7 @@ var _bluebird = __webpack_require__(17);
 
 var _bluebird2 = _interopRequireDefault(_bluebird);
 
-var _mongoose = __webpack_require__(1);
+var _mongoose = __webpack_require__(2);
 
 var _mongoose2 = _interopRequireDefault(_mongoose);
 
@@ -300,6 +300,10 @@ var _User2 = _interopRequireDefault(_User);
 var _Company = __webpack_require__(19);
 
 var _Company2 = _interopRequireDefault(_Company);
+
+var _config = __webpack_require__(1);
+
+var _config2 = _interopRequireDefault(_config);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -314,7 +318,7 @@ var generateAntiForgery = function generateAntiForgery(session) {
 };
 
 var qbAuthUrl = exports.qbAuthUrl = function qbAuthUrl(event, context, callback) {
-  _tools2.default.setScopes("sign_in_with_intuit");
+  _tools2.default.setScopes("connect_handler");
   // Constructs the authorization URI.
   var uri = _tools2.default.intuitAuth.code.getUri({
     // Add CSRF protection
@@ -363,8 +367,8 @@ var qbCallback = exports.qbCallback = function qbCallback(event, context, callba
 };
 
 var connected = exports.connected = function connected(event, context, callback) {
-  var realmId = event.body.realmId;
-  if (!realmId) return context.done(new Error("No realm ID.  QBO calls only work if the accounting scope was passed!"), {});
+  var companyId = event.body.companyId;
+  if (!companyId) return context.done(new Error("No realm ID.  QBO calls only work if the accounting scope was passed!"), {});
   var token = _tools2.default.getToken(event.body.session);
   var url = _tools2.default.openid_configuration.userinfo_endpoint;
   console.log("Making API call to: " + url);
@@ -399,23 +403,11 @@ var connected = exports.connected = function connected(event, context, callback)
         email: data.email,
         firstname: data.givenName,
         lastname: data.familyName,
-        token: {
-          accessToken: event.body.session.accessToken,
-          refreshToken: event.body.session.refreshToken
-        }
+        session: (0, _stringify2.default)(event.body.session)
       });
-      // errs = user.validateSync();
-
-      // if (errs) {
-      //   console.log(errs);
-      //   callback(null, createErrorResponse(400, "Incorrect user data"));
-      //   db.close();
-      //   return;
-      // }
-      ///
       console.log("starting db save");
       db.once("open", function () {
-        _Company2.default.findById(realmId).then(function (company) {
+        _Company2.default.findById(companyId).then(function (company) {
           return user.save().then(function () {
             company.users.push(user);
             return company.save();
@@ -432,46 +424,21 @@ var connected = exports.connected = function connected(event, context, callback)
           db.close();
         });
       });
-      // db.once("open", () => {
-      //   user
-      //     .save()
-      //     .then(() => {
-      //       callback(null, {
-      //         statusCode: 200,
-      //         body: JSON.stringify({ id: user[mongooseId] })
-      //       });
-      //     })
-      //     .catch(err => {
-      //       console.log(err);
-      //       callback(null, createErrorResponse(err.statusCode, err.message));
-      //     })
-      //     .finally(() => {
-      //       db.close();
-      //     });
-      // });
     }, function (err) {
       console.log(err);
       return context.done(new Error(err), {});
     });
   });
 };
-
-var apiCall = exports.apiCall = function apiCall(event, context, callback) {
-  var token = _tools2.default.getToken(event.body.token);
-  var realmId = event.body.realmId;
-  if (!realmId) return context.done(new Error("No realm ID.  QBO calls only work if the accounting scope was passed!"), {});
-  console.log(event.body);
-  context.succeed({ message: "connected" });
-};
-
-//USER
 var createErrorResponse = function createErrorResponse(statusCode, message) {
   return {
     statusCode: statusCode || 501,
-    headers: { "Content-Type": "text/plain" },
+    headers: { "Content-Type": "text/plain", "Access-Control-Allow-Origin": "*" },
     body: message || "Incorrect id"
   };
 };
+
+//USER
 
 var createCompany = exports.createCompany = function createCompany(event, context, callback) {
   var db = {};
@@ -519,8 +486,7 @@ var user = exports.user = function user(event, context, callback) {
 };
 
 var company = exports.company = function company(event, context, callback) {
-  var token = (0, _jwtDecode2.default)(event.headers.Authorization);
-  console.log(token);
+  var _id = event.pathParameters.id;
 
   var response = function response(company) {
     return {
@@ -539,7 +505,7 @@ var company = exports.company = function company(event, context, callback) {
   });
 
   db.once("open", function () {
-    _Company2.default.findOne({ email: token.email }).populate({
+    _Company2.default.find({ _id: _id }).populate({
       path: "users"
     }).then(function (company) {
       callback(null, response(company));
@@ -548,6 +514,53 @@ var company = exports.company = function company(event, context, callback) {
     }).finally(function () {
       // Close db connection or node event loop won't exit , and lambda will timeout
       db.close();
+    });
+  });
+};
+
+// QUICKBOOKS API CALS
+
+var loadReport = exports.loadReport = function loadReport(event, context, callback) {
+  var _event$body = event.body,
+      reportType = _event$body.reportType,
+      realmId = _event$body.realmId,
+      startDate = _event$body.startDate,
+      endDate = _event$body.endDate;
+
+  if (!realmId) {
+    callback(null, createErrorResponse(500, "No realm ID.  QBO calls only work if the accounting scope was passed!"));
+  }
+  var token = _tools2.default.getToken(event.body.session);
+  // date format YYYY-MM-DD
+  var url = _config2.default.api_uri + realmId + ("/reports/" + reportType + "?start_date=" + startDate + "&end_date=" + endDate);
+  console.log("Making API call to: " + url);
+  var requestObj = {
+    url: url,
+    headers: {
+      Authorization: "Bearer " + token.accessToken,
+      Accept: "application/json"
+    }
+  };
+  (0, _request2.default)(requestObj, function (err, response) {
+    // Check if 401 response was returned - refresh tokens if so!
+    _tools2.default.checkForUnauthorized(event.body, requestObj, err, response).then(function (_ref2) {
+      var err = _ref2.err,
+          response = _ref2.response;
+
+      console.log(response.statusCode);
+      if (err || response.statusCode != 200) {
+        callback(null, createErrorResponse(err && err.statusCode || response.statusCode, err && err.message || response.body));
+      }
+      callback(null, {
+        statusCode: 200,
+        headers: {
+          "Access-Control-Allow-Origin": "*" // Required for CORS support to work
+        },
+        body: (0, _stringify2.default)(response.body)
+      });
+    }, function (err) {
+      console.log(err);
+      callback(null, createErrorResponse(err.statusCode, err.message));
     });
   });
 };
@@ -592,8 +605,8 @@ module.exports = require("btoa");
 var atob = __webpack_require__(12);
 var expect = __webpack_require__(13);
 var request = __webpack_require__(0);
-var tools = __webpack_require__(3);
-var config = __webpack_require__(4);
+var tools = __webpack_require__(4);
+var config = __webpack_require__(1);
 
 var JWT = function JWT() {
   var jwt = this;
@@ -705,17 +718,13 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _mongoose = __webpack_require__(1);
+var _mongoose = __webpack_require__(2);
 
 var _mongoose2 = _interopRequireDefault(_mongoose);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var Schema = _mongoose2.default.Schema;
-var tokenSchema = new Schema({
-  accessToken: String,
-  refreshToken: String
-});
 var UserSchema = new Schema({
   email: {
     type: String,
@@ -727,7 +736,7 @@ var UserSchema = new Schema({
   lastname: {
     type: String
   },
-  token: tokenSchema
+  session: String
 });
 
 var User = _mongoose2.default.model("user", UserSchema);
@@ -745,7 +754,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _mongoose = __webpack_require__(1);
+var _mongoose = __webpack_require__(2);
 
 var _mongoose2 = _interopRequireDefault(_mongoose);
 

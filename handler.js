@@ -9,6 +9,8 @@ import mongoose from "mongoose";
 import User from "./src/models/User";
 import Company from "./src/models/Company";
 
+import config from "./config.json";
+
 const csrf = new Tokens();
 const mongoString = process.env.MONGO_URL;
 
@@ -20,7 +22,7 @@ const generateAntiForgery = session => {
 };
 
 export const qbAuthUrl = (event, context, callback) => {
-  tools.setScopes("sign_in_with_intuit");
+  tools.setScopes("connect_handler");
   // Constructs the authorization URI.
   const uri = tools.intuitAuth.code.getUri({
     // Add CSRF protection
@@ -79,8 +81,8 @@ export const qbCallback = (event, context, callback) => {
 };
 
 export const connected = (event, context, callback) => {
-  const realmId = event.body.realmId;
-  if (!realmId)
+  const companyId = event.body.companyId;
+  if (!companyId)
     return context.done(
       new Error(
         "No realm ID.  QBO calls only work if the accounting scope was passed!"
@@ -119,15 +121,11 @@ export const connected = (event, context, callback) => {
           email: data.email,
           firstname: data.givenName,
           lastname: data.familyName,
-          token: {
-            accessToken: event.body.session.accessToken,
-            refreshToken: event.body.session.refreshToken
-          },
-          realmId
+          session: JSON.stringify(event.body.session)
         });
         console.log("starting db save");
         db.once("open", () => {
-          Company.findById(realmId)
+          Company.findById(companyId)
             .then(company => {
               return user.save().then(() => {
                 company.users.push(user);
@@ -156,27 +154,13 @@ export const connected = (event, context, callback) => {
     );
   });
 };
-
-export const apiCall = (event, context, callback) => {
-  const token = tools.getToken(event.body.token);
-  const realmId = event.body.realmId;
-  if (!realmId)
-    return context.done(
-      new Error(
-        "No realm ID.  QBO calls only work if the accounting scope was passed!"
-      ),
-      {}
-    );
-  console.log(event.body);
-  context.succeed({ message: "connected" });
-};
-
-//USER
 const createErrorResponse = (statusCode, message) => ({
   statusCode: statusCode || 501,
-  headers: { "Content-Type": "text/plain" },
+  headers: { "Content-Type": "text/plain", "Access-Control-Allow-Origin": "*" },
   body: message || "Incorrect id"
 });
+
+//USER
 
 export const createCompany = (event, context, callback) => {
   let db = {};
@@ -231,8 +215,7 @@ export const user = (event, context, callback) => {
 };
 
 export const company = (event, context, callback) => {
-  const token = decode(event.headers.Authorization);
-  console.log(token);
+  const _id = event.pathParameters.id;
 
   const response = company => ({
     statusCode: 200,
@@ -249,7 +232,7 @@ export const company = (event, context, callback) => {
   });
 
   db.once("open", () => {
-    Company.findOne({ email: token.email })
+    Company.find({ _id })
       .populate({
         path: "users"
       })
@@ -263,5 +246,62 @@ export const company = (event, context, callback) => {
         // Close db connection or node event loop won't exit , and lambda will timeout
         db.close();
       });
+  });
+};
+
+// QUICKBOOKS API CALS
+
+export const loadReport = (event, context, callback) => {
+  const { reportType, realmId, startDate, endDate } = event.body;
+  if (!realmId) {
+    callback(
+      null,
+      createErrorResponse(
+        500,
+        "No realm ID.  QBO calls only work if the accounting scope was passed!"
+      )
+    );
+  }
+  const token = tools.getToken(event.body.session);
+  // date format YYYY-MM-DD
+  const url =
+    config.api_uri +
+    realmId +
+    `/reports/${reportType}?start_date=${startDate}&end_date=${endDate}`;
+  console.log("Making API call to: " + url);
+  const requestObj = {
+    url: url,
+    headers: {
+      Authorization: "Bearer " + token.accessToken,
+      Accept: "application/json"
+    }
+  };
+  request(requestObj, (err, response) => {
+    // Check if 401 response was returned - refresh tokens if so!
+    tools.checkForUnauthorized(event.body, requestObj, err, response).then(
+      ({ err, response }) => {
+        console.log(response.statusCode);
+        if (err || response.statusCode != 200) {
+          callback(
+            null,
+            createErrorResponse(
+              (err && err.statusCode) || response.statusCode,
+              (err && err.message) || response.body
+            )
+          );
+        }
+        callback(null, {
+          statusCode: 200,
+          headers: {
+            "Access-Control-Allow-Origin": "*" // Required for CORS support to work
+          },
+          body: JSON.stringify(response.body)
+        });
+      },
+      err => {
+        console.log(err);
+        callback(null, createErrorResponse(err.statusCode, err.message));
+      }
+    );
   });
 };
