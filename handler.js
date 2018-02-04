@@ -252,7 +252,7 @@ export const company = (event, context, callback) => {
 // QUICKBOOKS API CALS
 
 export const loadReport = (event, context, callback) => {
-  const { reportType, realmId, startDate, endDate } = event.body;
+  const { reportType, realmId, date } = event.body;
   if (!realmId) {
     callback(
       null,
@@ -262,12 +262,16 @@ export const loadReport = (event, context, callback) => {
       )
     );
   }
+  console.log(date);
+
   const token = tools.getToken(event.body.session);
   // date format YYYY-MM-DD
   const url =
     config.api_uri +
     realmId +
-    `/reports/${reportType}?start_date=${startDate}&end_date=${endDate}`;
+    `/reports/${reportType}?${date.start.key}=${date.start.value}&${
+      date.end.key
+    }=${date.end.value}`;
   console.log("Making API call to: " + url);
   const requestObj = {
     url: url,

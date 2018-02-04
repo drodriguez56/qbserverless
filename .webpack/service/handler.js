@@ -73,7 +73,7 @@ module.exports = require("request");
 /* 1 */
 /***/ (function(module, exports) {
 
-module.exports = {"redirectUri":"http://localhost:3000/callback/","configurationEndpoint":"https://developer.api.intuit.com/.well-known/openid_sandbox_configuration/","api_uri":"https://sandbox-quickbooks.api.intuit.com/v3/company/","scopes":{"sign_in_with_intuit":["openid","profile","email","phone","address"],"connect_to_quickbooks":["com.intuit.quickbooks.accounting"],"connect_handler":["com.intuit.quickbooks.accounting","openid","profile","email","phone","address"]}}
+module.exports = {"redirectUri":"http://test.zemdash.com/callback/","configurationEndpoint":"https://developer.api.intuit.com/.well-known/openid_sandbox_configuration/","api_uri":"https://sandbox-quickbooks.api.intuit.com/v3/company/","scopes":{"sign_in_with_intuit":["openid","profile","email","phone","address"],"connect_to_quickbooks":["com.intuit.quickbooks.accounting"],"connect_handler":["com.intuit.quickbooks.accounting","openid","profile","email","phone","address"]}}
 
 /***/ }),
 /* 2 */
@@ -524,15 +524,16 @@ var loadReport = exports.loadReport = function loadReport(event, context, callba
   var _event$body = event.body,
       reportType = _event$body.reportType,
       realmId = _event$body.realmId,
-      startDate = _event$body.startDate,
-      endDate = _event$body.endDate;
+      date = _event$body.date;
 
   if (!realmId) {
     callback(null, createErrorResponse(500, "No realm ID.  QBO calls only work if the accounting scope was passed!"));
   }
+  console.log(date);
+
   var token = _tools2.default.getToken(event.body.session);
   // date format YYYY-MM-DD
-  var url = _config2.default.api_uri + realmId + ("/reports/" + reportType + "?start_date=" + startDate + "&end_date=" + endDate);
+  var url = _config2.default.api_uri + realmId + ("/reports/" + reportType + "?" + date.start.key + "=" + date.start.value + "&" + date.end.key + "=" + date.end.value);
   console.log("Making API call to: " + url);
   var requestObj = {
     url: url,
