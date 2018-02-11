@@ -6,7 +6,7 @@ const CompanySchema = new Schema({
     type: String,
     required: true
   },
-  users: [{ type: Schema.Types.ObjectId, ref: "user" }]
+  applications: [{ type: Schema.Types.ObjectId, ref: "application" }]
 });
 
 const Company = mongoose.model("company", CompanySchema);

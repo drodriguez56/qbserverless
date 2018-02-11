@@ -8,6 +8,7 @@ import bluebird from "bluebird";
 import mongoose from "mongoose";
 import User from "./src/models/User";
 import Company from "./src/models/Company";
+import Application from "./src/models/Application";
 
 import config from "./config.json";
 
@@ -127,9 +128,15 @@ export const connected = (event, context, callback) => {
         db.once("open", () => {
           Company.findById(companyId)
             .then(company => {
-              return user.save().then(() => {
-                company.users.push(user);
-                return company.save();
+              const application = new Application({ company, user });
+              user.application = application;
+              company.application = application;
+              return Promise.all([
+                user.save(),
+                application.save(),
+                company.save()
+              ]).then(() => {
+                console.log("saved all");
               });
             })
             .then(() => {
@@ -234,7 +241,11 @@ export const company = (event, context, callback) => {
   db.once("open", () => {
     Company.find({ _id })
       .populate({
-        path: "users"
+        path: "applications",
+        populate: {
+          path: "user",
+          model: "user"
+        }
       })
       .then(company => {
         callback(null, response(company));

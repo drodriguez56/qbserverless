@@ -11,7 +11,8 @@ const UserSchema = new Schema({
   lastname: {
     type: String
   },
-  session: String
+  session: String,
+  applications: [{ type: Schema.Types.ObjectId, ref: "application" }]
 });
 
 const User = mongoose.model("user", UserSchema);
