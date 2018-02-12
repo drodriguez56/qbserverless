@@ -104,7 +104,7 @@ functions:
 
   connected:
     handler: handler.connected
-    timeout: 30
+    timeout: 60
     events:
       - http:
           path: api/connected

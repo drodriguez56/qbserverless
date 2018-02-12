@@ -20,6 +20,7 @@
     "jwk-to-pem": "^1.2.6",
     "jwt-decode": "^2.2.0",
     "mongoose": "^4.13.9",
+    "mongoose-findorcreate": "^2.0.0",
     "node-quickbooks": "^2.0.20",
     "request": "^2.83.0",
     "rsa-pem-from-mod-exp": "^0.8.4",

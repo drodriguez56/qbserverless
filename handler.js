@@ -22,6 +22,12 @@ const generateAntiForgery = session => {
   return csrf.create(session.secret);
 };
 
+const createErrorResponse = (statusCode, message) => ({
+  statusCode: statusCode || 501,
+  headers: { "Content-Type": "text/plain", "Access-Control-Allow-Origin": "*" },
+  body: message || "Incorrect id"
+});
+
 export const qbAuthUrl = (event, context, callback) => {
   tools.setScopes("connect_handler");
   // Constructs the authorization URI.
@@ -118,40 +124,63 @@ export const connected = (event, context, callback) => {
         db = mongoose.connect(mongoString, {
           useMongoClient: true
         });
-        user = new User({
-          email: data.email,
-          firstname: data.givenName,
-          lastname: data.familyName,
-          session: JSON.stringify(event.body.session)
-        });
-        console.log("starting db save");
         db.once("open", () => {
-          Company.findById(companyId)
-            .then(company => {
-              const application = new Application({ company, user });
-              user.application = application;
-              company.application = application;
-              return Promise.all([
-                user.save(),
-                application.save(),
-                company.save()
-              ]).then(() => {
-                console.log("saved all");
-              });
-            })
-            .then(() => {
-              callback(null, {
-                statusCode: 200,
-                body: JSON.stringify({ id: user[mongooseId] })
-              });
-            })
-            .catch(err => {
-              console.log(err);
-              callback(null, createErrorResponse(err.statusCode, err.message));
-            })
-            .finally(() => {
-              db.close();
-            });
+          User.findOneOrCreate(
+            {
+              email: data.email,
+              firstname: data.givenName,
+              lastname: data.familyName,
+              session: JSON.stringify(event.body.session)
+            },
+            (error, user) => {
+              if (error) {
+                callback(
+                  null,
+                  createErrorResponse(err.statusCode, err.message)
+                );
+              }
+              Company.findById(companyId)
+                .populate({
+                  path: "applications",
+                  populate: {
+                    path: "user",
+                    model: "user"
+                  }
+                })
+                .then(company => {
+                  const hasApplied = company.applications.filter(appl => {
+                    return appl.user._id.toString() === user._id.toString();
+                  });
+                  if (hasApplied.length > 0) {
+                    return callback(
+                      null,
+                      createErrorResponse(422, "already applied")
+                    );
+                  } else {
+                    const application = new Application({ company, user });
+                    user.applications.push(application);
+                    company.applications.push(application);
+                    return Promise.all([
+                      user.save(),
+                      application.save(),
+                      company.save()
+                    ]).then(() => {
+                      console.log("saved all");
+                      return callback(null, { statusCode: 200, body: "saved" });
+                    });
+                  }
+                })
+                .catch(err => {
+                  callback(
+                    null,
+                    createErrorResponse(err.statusCode, err.message)
+                  );
+                })
+                .finally(() => {
+                  db.close();
+                });
+            }
+          );
         });
       },
       err => {
@@ -161,11 +190,6 @@ export const connected = (event, context, callback) => {
     );
   });
 };
-const createErrorResponse = (statusCode, message) => ({
-  statusCode: statusCode || 501,
-  headers: { "Content-Type": "text/plain", "Access-Control-Allow-Origin": "*" },
-  body: message || "Incorrect id"
-});
 
 //USER
 
@@ -178,19 +202,19 @@ export const createCompany = (event, context, callback) => {
   db = mongoose.connect(mongoString, {
     useMongoClient: true
   });
-
+  const body = JSON.parse(event.body);
   company = new Company({
-    email: event.request.userAttributes.email
+    email: body.email
   });
 
   db.once("open", () => {
     company
       .save()
       .then(() => {
-        return context.succeed(event);
+        callback(null, { statusCode: 200, body: "saved" });
       })
       .catch(err => {
-        return context.fail("Signup Failed. to saved to DB");
+        callback(null, createErrorResponse(err.statusCode, err.message));
       })
       .finally(() => {
         db.close();
